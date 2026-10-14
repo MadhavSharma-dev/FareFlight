@@ -1,0 +1,57 @@
+# So basically  if we generalise then docker-compose.yaml file helps us to start any of the message-broker , database , cache , services with one command otherwise I have to start it manually if there would be no docker-compose.yaml 
+
+version: '3.8'
+
+services:
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: fareflight-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: fareflight
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Redis Cache
+  redis:
+    image: redis:7
+    container_name: fareflight-redis
+    ports:
+      - "6379:6379"
+
+  # Zookeeper (Kafka needs this to run)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: fareflight-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  # Kafka Message Broker
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: fareflight-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+volumes:
+  postgres_data:
+
+
+# The file starts 4 containers with one command:
+
+# Postgres — your main database, running on port 5432 with a default user, password, and DB name
+# Redis — your cache, running on port 6379
+# Zookeeper — Kafka's internal manager, you don't interact with it directly
+# Kafka — your message broker, running on port 9092, connected to Zookeeper
