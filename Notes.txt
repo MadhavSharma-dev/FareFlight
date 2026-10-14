@@ -1,0 +1,74 @@
+One-liner: A scalable flight booking platform that handles real-time seat locking, dynamic pricing, and async event-driven notifications.
+
+Horizontal Scaling — for this project.
+
+Component	Reason
+Load Balancer	Traffic multiple servers pe distribute karta hai ✅
+Microservices	Har service independently scale ho sakti hai ✅
+Read Replica	Read load multiple DBs pe split hoti hai ✅
+Kafka	        Multiple consumers parallel kaam karte hain ✅
+Redis           Cache	DB pe load kam karta hai ✅
+
+Kafka: Kafka ek messaging system hai jo ek service ka kaam complete hone ke baad doosri services ko automatically notify karta hai — bina directly connect kiye. Jaise ek postman jo messages queue mein rakhta hai aur sahi jagah deliver karta hai.
+
+Redis: Redis ek in-memory database hai jo data RAM mein store karta hai — isliye bohot fast hota hai. Yeh mainly caching aur seat locking ke liye use hota hai. Jaise ek rough copy jahan se data turant milta hai, baar baar main DB pe jaane ki zaroorat nahi.
+
+FareFlight is a microservices-based flight booking system designed to handle high-concurrency scenarios like multiple users trying to book the same seat simultaneously 
+
+The system starts at the client layer (web/mobile), routes traffic through a CDN for static assets and a Load Balancer for API traffic, hitting an API Gateway that handles authentication and routing to three core microservices — Auth, Search, and Booking.
+
+Search Service flights fetch karta hai aur unhe rank karta hai dynamic pricing ke saath, jo Pricing Engine se aati hai. Jab user koi seat select karta hai, tab Booking Service ek Redis-based seat lock lagate hai (SETNX) taaki do log ek hi seat book na kar sakein — isse double booking rokti hai.
+
+Uske baad payment charge hoti hai — agar payment successful ho gayi toh seat confirm ho jaati hai, aur agar payment fail ho gayi toh lock release ho jaata hai aur ek Seat Released Event Kafka pe publish hota hai. Yeh event downstream consumers ko trigger karta hai jaise Payment, Notifications (Email/SMS), Waitlist processing, aur Search Reindexing.
+
+Data layer mein Postgres write DB hai, aur Read Replica scale karne ke liye use hoti hai. Fast reads ke liye Cache hai aur flight queries ke liye Search Index. Observability ke liye logs, metrics aur tracing sabhi services mein cover ki gayi hai.
+
+HLD Breakdown : 
+
+So basically this project is a flight booking system where a user through his mobile app or web browser enters and then in HLD I have shown CDN and Load Balancer 
+
+Load Balancer helps in distributing the traffic across different servers and then we have CDN .. Its Content Delivery Network 
+
+This helps in connecting the nearest server ..Lets say my main office is in USA but I am in Delhi , so I can directly connect with nearest server which helps in better output 
+
+Then through an API gateway we shall enter then we have 3 microservices => Auth Service , Search Engine , Booking Service 
+
+In Auth service there will be user details , profile details 
+
+In Search service there will be work related to searching 
+
+In Booking service => It checks prices and stores data 
+
+Once a booking is made , there is a Kafka which triggers other systems to process the payment , send email etc etc 
+
+There is also a observability layer to ensure that everything runs smoothly 
+
+For Caching we are using Redis => It creates a cache memory and from there we can use our application instantly 
+
+<-------------------------------------------------------------------------------------------------------------------------------------->
+LLD Breakdown : 
+
+Search & Selection: A user searches for tickets, and the system returns filtered, ranked, and dynamically priced results before the user selects a seat to book.
+
+Seat Locking: The system attempts to temporarily lock the seat (using Redis SETNX and DB version checks) to prevent double-booking. If it cannot lock the seat, it returns a 409 error.
+
+Payment: If the seat is successfully locked, the system proceeds to charge the payment.
+
+Final Outcome: If payment succeeds, the seat is confirmed; if payment fails, the seat is released via a system event so others can book it.
+
+
+User flight search karta hai → results filter, rank aur dynamic price ke saath aate hain.
+
+User seat select karta hai → Redis SETNX se seat lock acquire hoti hai. Agar lock nahi mili → 409 error. Agar lock mil gayi → payment charge hoti hai.
+
+Payment success → seat confirm. Payment fail → seat release ho jaati hai aur Seat Released Event Kafka pe jaata hai.
+
+
+<-------------------------------------------------------------------------------------------------------------------------------------->
+Why CDN and Load Balancer separately?
+
+A CDN is a network of servers spread across the world that stores copies of your content (images, videos, CSS, JavaScript, sometimes whole pages) close to your users. When someone in Delhi requests your site, they get files from a nearby CDN server instead of your origin server in, say, Virginia.
+
+Load Balancer helps in distrubuting the traffic among different servers
+
+Basicslly TTL is a part of caching that gives you some time to perform that task and if the task is not performed within that particular period then Redis automatically deletes it from cache memory
