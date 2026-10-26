@@ -1,0 +1,30 @@
+<--------------------------REST API----------------------------->
+
+An API is a way for one piece fo software to talk to another ... REST is a set of rules for how that conversation should happen over HTTP , the same protocol your browser uses 
+
+
+Why we need it ??
+Separation of concerns: the frontend (website or app) and backend can be built and changed independently.
+One backend, many clients: the same API can serve a website, an Android app, an iOS app, and other companies’ systems.
+Standard and simple: it uses HTTP, which every language and platform already supports, so no special tools are needed. HTTP methods : Get , Post , Put , Patch , Delete
+Scalable: because requests are stateless, you can run many servers behind a load balancer.
+Security and control: the outside world never touches your database directly. The API decides who can see or change what.
+
+
+What is it used for ??
+
+It is used in everything you see online 
+
+Mobile apps: Instagram, Uber, and Swiggy apps fetch data from servers through APIs.
+Websites: React or Angular frontends load data from backend APIs.
+Payments: Razorpay and Stripe let you charge cards via API calls.
+Third-party integrations: “Login with Google,” weather widgets, maps, and sending SMS or emails.
+
+
+What happens if there is no REST API ??
+
+A separate backend for every platform: the website, Android app, and iOS app would each need their own custom code to get the same data.
+Security risks: apps might have to connect directly to the database, exposing it to attacks and data leaks.
+No easy integration: every company would invent its own communication format, so connecting two systems would be slow, custom work.
+Hard to scale and maintain: teams couldn’t work independently, and growth would mean rewriting large parts of the system.
+

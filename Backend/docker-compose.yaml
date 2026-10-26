@@ -1,5 +1,7 @@
 # So basically  if we generalise then docker-compose.yaml file helps us to start any of the message-broker , database , cache , services with one command otherwise I have to start it manually if there would be no docker-compose.yaml 
 
+#All services starts with one command......
+
 version: '3.8'
 
 services:
@@ -42,11 +44,103 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  # API Gateway
+  api-gateway:
+    build: ./services/API-Gateway
+    container_name: fareflight-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      AUTH_SERVICE_URL: http://auth-service:3001
+      AUTH_SERVICE_HOST: auth-service
+      AUTH_SERVICE_PORT: 3001
+      BOOKING_SERVICE_URL: http://booking-service:3002
+      SEARCH_SERVICE_URL: http://search-service:3003
+      NOTIFICATION_SERVICE_URL: http://notification-service:3004
+    depends_on:
+      - auth-service
+      - booking-service
+      - search-service
+      - notification-service
+
+  # Auth Service
+  auth-service:
+    build: ./services/Auth-Service
+    container_name: fareflight-auth
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: admin
+      DB_PASSWORD: password
+      DB_NAME: fareflight
+      JWT_SECRET: your_jwt_secret_here
+    depends_on:
+      - postgres
+
+  # Search Service
+  search-service:
+    build: ./services/Search-service
+    container_name: fareflight-search
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: 3003
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: admin
+      DB_PASSWORD: password
+      DB_NAME: fareflight
+      KAFKA_BROKER: kafka:9092
+    depends_on:
+      - postgres
+      - kafka
+
+  # Booking Service
+  booking-service:
+    build: ./services/Booking-Service
+    container_name: fareflight-booking
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: 3002
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: admin
+      DB_PASSWORD: password
+      DB_NAME: fareflight
+      JWT_SECRET: your_jwt_secret_here
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BROKER: kafka:9092
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+
+  # Notification Service
+  notification-service:
+    build: ./services/Notification-service
+    container_name: fareflight-notification
+    ports:
+      - "3004:3004"
+    environment:
+      PORT: 3004
+      KAFKA_BROKER: kafka:9092
+      EMAIL_USER: your_email@gmail.com
+      EMAIL_PASS: your_email_password
+    depends_on:
+      - kafka
 
 volumes:
   postgres_data:
+
 
 
 # The file starts 4 containers with one command:

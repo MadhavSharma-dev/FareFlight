@@ -1,0 +1,46 @@
+A single entry point that sits between the client and all your microservices... Each request from the frontend goes through it first 
+
+Think of it like a receptionist at a big company -> You don't walk directly to any employee's desk => You go through reception first 
+
+Why it is Used ??
+1 - To route requests to the correct microservice
+2 - To authenticate users in one place instead of every service
+3 - To protect services from being directly exposed to the internet 
+
+Advantages :
+1 - Single entry point -> Client only needs to know one URL 
+2 - Centeralized auth -> JWT verification done once, not in every service 
+3 - Rate limiting , Load Balancing 
+
+Without API Gateway :
+Auth in every service A user books a flight → Booking Service has to verify the JWT. A user searches flights → Search Service has to verify the JWT. You end up writing the same auth code in every single service. If you change the JWT logic, you have to update all services.
+
+Frontend manages multiple URLs Your React frontend has to store and manage 3+ different base URLs. If you move Booking Service to a different server or change its port — you have to update and redeploy the frontend.
+
+Rate limiting means restricting how many requests a client can make in a given time window.
+
+Real World Analogy
+Think of an ATM machine 
+
+You're allowed to enter your PIN 3 times max
+If you fail 3 times → ATM blocks you for a while
+This prevents someone from sitting there trying every possible PIN
+Rate limiting does the same for your API.
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15 minutes
+  max: 100,                   // max 100 requests
+  message: { message: 'Too many requests, please try again later' },
+});
+
+
+This means:
+
+Any single client (IP address) can make max 100 requests in 15 minutes
+If they exceed 100 → they get blocked and receive the error message
+After 15 minutes → their counter resets and they can make requests again
+
+Problems that comes without rate limiting :
+1 - Server crashes 
+2 - If someone is continuously trying wrong pasword => You cannot restrict them 
+3 - Services goes down 
